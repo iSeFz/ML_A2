@@ -35,7 +35,7 @@ def preprocess_data(data, target_columns, mv_technique):
             print("Missing values imputed.")
     else:
         print("No missing values found.")
-    
+
     # Separate the data into features and targets
     features = data.drop(columns=target_columns)
     targets = data[target_columns]
@@ -75,6 +75,23 @@ def k_nearest_neighbors(x_train, x_test, y_train, y_test):
     k_nearest_neighbors_predictions = k_nearest_neighbors_model.predict(x_test) # Make predictions
     print("k-Nearest Neighbors model trained.")
     return k_nearest_neighbors_predictions # Return the predictions
+
+def custom_knn(xTrain, yTrain, xTest, k):
+    predictions = []
+    for i in range(xTest.shape[0]):  # Iterate over test samples
+        test_point = xTest[i]  # Single test point
+
+        # Calculate distances from test_point to all points in xTrain
+        distances = np.sqrt(np.sum((xTrain - test_point) ** 2, axis=1))
+
+        # Get indices of k nearest neighbors
+        k_indices = np.argsort(distances)[:k]
+        k_labels = yTrain[k_indices]  # Fetch their corresponding labels
+
+        # Majority vote (classification)
+        prediction = np.bincount(k_labels).argmax()
+        predictions.append(prediction)
+    return predictions
 
 def naive_bayes(x_train, x_test, y_train, y_test):
     # Create the Naïve Bayes model
@@ -127,6 +144,54 @@ def main():
     }
     results_df = pd.DataFrame(all_metrics, index=["Accuracy", "Precision", "Recall"]) # Create a DataFrame
     print("\nModel Comparison:\n", results_df)  # Display the results
+
+    # Convert your data to numpy arrays with appropriate data types
+    x_train_np = np.array(x_train, dtype=np.float64)
+    y_train_np = np.array(y_train, dtype=np.int64)
+    x_test_np = np.array(x_test, dtype=np.float64)
+
+    # Convert yTrain to 1D
+    y_train_np = y_train_np.ravel()
+
+    #Use your custom_knn function to make predictions
+    predictions = custom_knn(x_train_np, y_train_np, x_test_np, k=3)
+    # Evaluate the Model
+    KNN_accuracy = accuracy_score(y_test, predictions)
+    KNN_precision = precision_score(y_test, predictions)
+    KNN_recall = recall_score(y_test, predictions)
+    print("Custom KNN Model Metrics:")
+    print(f"Accuracy: {KNN_accuracy:.2f}")
+    print(f"Precision: {KNN_precision:.2f}")
+    print(f"Recall: {KNN_recall:.2f}")
+
+    #Experiment with Different k Values
+    print("Experiment with Different k Values")
+    results = []
+    for k in [1, 3, 5, 7, 9]:
+        predictions = custom_knn(x_train_np, y_train_np, x_test_np, k=k)
+
+        accuracy = accuracy_score(y_test, predictions)
+        precision = precision_score(y_test, predictions)
+        recall = recall_score(y_test, predictions)
+
+        # Append the results for this k
+        results.append([k, accuracy, precision, recall])
+
+    # Convert the results into a pandas DataFrame
+    results_df = pd.DataFrame(results, columns=['k', 'Accuracy', 'Precision', 'Recall'])
+
+    print(results_df)
+    ####** --- Comparison ---**
+    ### **Custom KNN vs Sklearn KNN**
+    comparison = {
+        'Metric': ['Accuracy', 'Precision', 'Recall'],
+        'Custom KNN': [KNN_accuracy, KNN_precision, KNN_recall],
+        'Sklearn KNN': k_nearest_neighbors_metrics
+    }
+
+    comparison_df = pd.DataFrame(comparison)
+    print("\nComparison (Custom KNN vs Sklearn KNN):")
+    print(comparison_df)
 
 if __name__ == "__main__":
     main()
