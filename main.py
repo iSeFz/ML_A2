@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, precision_score, recall_score
@@ -61,12 +62,12 @@ def preprocess_data(data, target_columns, mv_technique):
 
 
 def decision_tree(x_train, x_test, y_train, y_test):
-    # Create the Decision Tree model
-    decision_tree_model = DecisionTreeClassifier(random_state=42) # Set the random state for reproducibility
-    decision_tree_model.fit(x_train, y_train) # Train the model
-    decision_tree_predictions = decision_tree_model.predict(x_test) # Make predictions
+    decision_tree_model = DecisionTreeClassifier(random_state=42)  # Set the random state
+    decision_tree_model.fit(x_train, y_train)  # Train the model
+    decision_tree_predictions = decision_tree_model.predict(x_test)  # Make predictions
     print("Decision Tree model trained.")
-    return decision_tree_predictions # Return the predictions
+    return decision_tree_model, decision_tree_predictions  # Return the model and predictions
+
 
 def k_nearest_neighbors(x_train, x_test, y_train, y_test):
     # Create the k-Nearest Neighbors model
@@ -112,6 +113,24 @@ def evaluate_model(y_test, predictions, model_name):
     print(f"Recall: {recall}")
     return accuracy, precision, recall # Return the metrics
 
+def compare_missing_value_strategies():
+    data = {
+        "Model": ["Decision Tree", "k-Nearest Neighbors", "Naïve Bayes"] * 2,
+        "Strategy": ["Dropping"] * 3 + ["Replacing"] * 3,
+        "Accuracy": [0.997872340425532, 0.9617021276595744, 0.9617021276595744,
+                     0.996, 0.968, 0.964],
+        "Precision": [1.0, 0.890625, 1.0, 1.0, 0.9166666666666666, 1.0],
+        "Recall": [0.9852941176470589, 0.8382352941176471, 0.7352941176470589,
+                   0.9642857142857143, 0.7857142857142857, 0.6785714285714286]
+    }
+
+    df = pd.DataFrame(data)
+
+    print("\nDropping vs Replacing Missing Values :\n")
+    print(df)
+
+
+
 
 # Main function
 def main():
@@ -119,7 +138,9 @@ def main():
     data = load_dataset()
 
     # Preprocess the data
-    x_train, x_test, y_train, y_test = preprocess_data(data, target_columns=["Rain"], mv_technique="replace")
+    x_train, x_test, y_train, y_test = preprocess_data(data, target_columns=["Rain"], mv_technique="drop")
+    # x_train, x_test, y_train, y_test = preprocess_data(data, target_columns=["Rain"], mv_technique="replace")
+
 
     # Display the preprocessed data
     print("\nTraining features:\n", x_train.head())
@@ -128,7 +149,7 @@ def main():
     print("\nTesting targets:\n", y_test.head())
 
     # Train and evaluate the Decision Tree model
-    decision_tree_predictions = decision_tree(x_train, x_test, y_train, y_test) # Make predictions
+    decision_tree_model, decision_tree_predictions = decision_tree(x_train, x_test, y_train, y_test)
     decision_tree_metrics = evaluate_model(y_test, decision_tree_predictions, "Decision Tree") # Evaluate the model
     # Train and evaluate the k-Nearest Neighbors model
     k_nearest_neighbors_predictions = k_nearest_neighbors(x_train, x_test, y_train, y_test) # Make predictions
@@ -144,6 +165,12 @@ def main():
     }
     results_df = pd.DataFrame(all_metrics, index=["Accuracy", "Precision", "Recall"]) # Create a DataFrame
     print("\nModel Comparison:\n", results_df)  # Display the results
+    
+    # Visualize the decision tree
+    plt.figure(figsize=(10, 10))
+    plot_tree(decision_tree_model, feature_names=x_train.columns, class_names=["No Rain", "Rain"], filled=True)
+    plt.title("Decision Tree Visualization")
+    plt.show()
 
     # Convert your data to numpy arrays with appropriate data types
     x_train_np = np.array(x_train, dtype=np.float64)
@@ -192,6 +219,10 @@ def main():
     comparison_df = pd.DataFrame(comparison)
     print("\nComparison (Custom KNN vs Sklearn KNN):")
     print(comparison_df)
+    
+    compare_missing_value_strategies()
+    
+
 
 if __name__ == "__main__":
     main()
