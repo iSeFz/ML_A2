@@ -129,7 +129,11 @@ def compare_missing_value_strategies():
     print("\nDropping vs Replacing Missing Values :\n")
     print(df)
 
-
+def visualize_tree(decision_tree_model, x_train):
+    plt.figure(figsize=(10, 10))
+    plot_tree(decision_tree_model, feature_names=x_train.columns, class_names=["No Rain", "Rain"], filled=True)
+    plt.title("Decision Tree Visualization")
+    plt.show()
 
 
 # Main function
@@ -139,8 +143,6 @@ def main():
 
     # Preprocess the data
     x_train, x_test, y_train, y_test = preprocess_data(data, target_columns=["Rain"], mv_technique="drop")
-    # x_train, x_test, y_train, y_test = preprocess_data(data, target_columns=["Rain"], mv_technique="replace")
-
 
     # Display the preprocessed data
     print("\nTraining features:\n", x_train.head())
@@ -166,11 +168,8 @@ def main():
     results_df = pd.DataFrame(all_metrics, index=["Accuracy", "Precision", "Recall"]) # Create a DataFrame
     print("\nModel Comparison:\n", results_df)  # Display the results
     
-    # Visualize the decision tree
-    plt.figure(figsize=(10, 10))
-    plot_tree(decision_tree_model, feature_names=x_train.columns, class_names=["No Rain", "Rain"], filled=True)
-    plt.title("Decision Tree Visualization")
-    plt.show()
+    # Visualization of Decision Tree
+    visualize_tree(decision_tree_model,x_train)
 
     # Convert your data to numpy arrays with appropriate data types
     x_train_np = np.array(x_train, dtype=np.float64)
